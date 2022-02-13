@@ -10,6 +10,7 @@ def OptimizeBWB(filename):
     # First step is to generate VSP3 file with parameters of choosing, for now we only have code to change the twist
 
     # Creating paths for objects we want to use such as .vsp3 files and VSPaero program
+    # These needs to be specified for the computer working with the script
     path_org = r"C:\Users\abbes\PycharmProjects\KandidatProjekt\Bachelor-MMSX20"
     path_vspaero = r"C:\Users\abbes\PycharmProjects\KandidatProjekt\OpenVSP-3.26.1-win64"
     path_output = "C:/Users/abbes/PycharmProjects/KandidatProjekt/Bachelor-MMSX20"
