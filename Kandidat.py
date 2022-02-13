@@ -10,9 +10,9 @@ def OptimizeBWB(filename):
     # First step is to generate VSP3 file with parameters of choosing, for now we only have code to change the twist
 
     # Creating paths for objects we want to use such as .vsp3 files and VSPaero program
-    path_org = r"C:\Users\abbes\PycharmProjects\KandidatProjekt"
+    path_org = r"C:\Users\abbes\PycharmProjects\KandidatProjekt\Bachelor-MMSX20"
     path_vspaero = r"C:\Users\abbes\PycharmProjects\KandidatProjekt\OpenVSP-3.26.1-win64"
-    path_output = "C:/Users/abbes/PycharmProjects/KandidatProjekt"
+    path_output = "C:/Users/abbes/PycharmProjects/KandidatProjekt/Bachelor-MMSX20"
     path_degengeom = r"C:\Users\abbes\PycharmProjects\KandidatProjekt\OpenVSP-3.26.1-win64\scripts"
 
     # TWIST VALUES
@@ -184,8 +184,8 @@ def OptimizeBWB(filename):
         return
 
     #CHECK ZERO PITCHING MOMENT FOR AOA = 0 (IS THIS WHAT WE SHOULD CHECK?)
-    if My[0] != 0:          # Assuming AoA will be zero at the first position, we can choose this ourselves in vspaero-file either way
-        return
+    # if My[0] != 0:          # Assuming AoA will be zero at the first position, we can choose this ourselves in vspaero-file either way
+       #  return
 
     theta = np.polyfit(AOA,My,1)
 
@@ -197,6 +197,7 @@ def OptimizeBWB(filename):
     plt.ylabel('CMy')
     plt.xlabel('AoA')
     plt.legend(["Slope coefficient: {}".format(coeff)])
+
     plt.show()
 
 
@@ -240,7 +241,7 @@ def OptimizeBWB(filename):
 
 
     Cl_sp = Wing_loading/DynamicP_spr
-    Cd = # Get from VSPaero?
+    Cd = 2 # Get from VSPaero?
     LvD_sp = Cl_sp/Cd  # Lift drag ratio for sprint
 
 
