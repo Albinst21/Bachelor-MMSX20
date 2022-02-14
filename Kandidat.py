@@ -232,7 +232,7 @@ def OptimizeBWB(filename):
     DynamicP_to = 0.5 * rho * V_to ** 2
     DynamicP_spr = 0.5 * rho * V_sp ** 2
 
-    Cl_max = 2 # Find maximum lift for model airfoil LA2573A (maybe found reference for this) and put in 2D-stall model
+    Cl_max = np.max(values[:, 4]) # Find maximum lift for model airfoil LA2573A (maybe found reference for this) and put in 2D-stall model
     # in vspaero the get Cl-max for model (probably will work)
     Cl_to = 0.8 * Cl_max
 
