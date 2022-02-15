@@ -17,10 +17,10 @@ def OptimizeBWB(filename):
     path_degengeom = r"C:\Users\abbes\PycharmProjects\KandidatProjekt\OpenVSP-3.26.1-win64\scripts"
 
     # TWIST VALUES
-    ThetaValues = ["25", "10", "10", "10", "10", "10", "10", "10"] #Coded for total amount of sections in model, double check this
+    ThetaValues = ["30", "0", "0", "0", "0", "0", "0", "0"] #Coded for total amount of sections in model, double check this
 
     # SWEEP VALUES
-    SWEEPValues = ["45", "45", "10", "10", "10", "10", "10", "10"]
+    SWEEPValues = ["0", "45", "0", "0", "0", "0", "0", "0"]
 
     # Choose geometry to run simulation for
     ORIGINAL_GEOMETRY_NAME = "{}".format(filename)
@@ -228,9 +228,10 @@ def OptimizeBWB(filename):
 
     # CALCULATIONS (CODE IN PROGRESS)
     W = 2 * 9.82
-    rho = 5
-    DynamicP_to = 0.5 * rho * V_to ** 2
-    DynamicP_spr = 0.5 * rho * V_sp ** 2
+    rho_to = 1.2255
+    rho_sp = 1.1677
+    DynamicP_to = 0.5 * rho_to * V_to ** 2
+    DynamicP_spr = 0.5 * rho_sp * V_sp ** 2
 
     Cl_max = np.max(values[:, 4]) # Find maximum lift for model airfoil LA2573A (maybe found reference for this) and put in 2D-stall model
     # in vspaero the get Cl-max for model (probably will work)
