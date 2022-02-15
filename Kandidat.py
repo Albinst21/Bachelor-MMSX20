@@ -17,10 +17,11 @@ def OptimizeBWB(filename):
     path_degengeom = r"C:\Users\abbes\PycharmProjects\KandidatProjekt\OpenVSP-3.26.1-win64\scripts"
 
     # TWIST VALUES
-    ThetaValues = ["30", "0", "0", "0", "0", "0", "0", "0"] #Coded for total amount of sections in model, double check this
+    ThetaValues = ["0", "0", "0", "0", "0", "0", "0",
+                   "0"]  # Coded for total amount of sections in model, double check this
 
     # SWEEP VALUES
-    SWEEPValues = ["0", "45", "0", "0", "0", "0", "0", "0"]
+    SWEEPValues = ["0", "0", "0", "0", "0", "0", "0", "0"]
 
     # Choose geometry to run simulation for
     ORIGINAL_GEOMETRY_NAME = "{}".format(filename)
@@ -121,7 +122,6 @@ def OptimizeBWB(filename):
             sweep.attrib = new_att
         k += 1
 
-
     # Writes to a new .vsp3 file that can be analyzed in OpenVSP
     Newfile = "output"
     tree.write('{}.vsp3'.format(Newfile))
@@ -138,10 +138,7 @@ def OptimizeBWB(filename):
     # Collect results from simulation
     input_data = r"{}\{}_DegenGeom.polar".format(path_output, Newfile)
 
-
-    #_______________________________________________________________________________________________________________
-
-
+    # _______________________________________________________________________________________________________________
 
     # Reads the result from the VSPaero simulation and saves chosen results
 
@@ -150,12 +147,6 @@ def OptimizeBWB(filename):
         line = file.readline()
         line = line.strip()
         line = ' '.join(line.split()).split(' ')
-
-        aoa_index = line.index('AoA')
-        cl_index = line.index('CL')
-        cd_index = line.index('CDtot')
-        ld_index = line.index('L/D')
-        cmy_index = line.index('CMy')
 
         counter = 0
         while line:
@@ -169,39 +160,6 @@ def OptimizeBWB(filename):
             counter += 1
             line = file.readline()
     values = np.array(dummy)
-
-
-
-
-
-    # CHECK PITCHING MOMENT VS AoA SLOPE
-
-    AOA = values[:, 2]
-    My = values[:, 15]
-
-    coef = np.corrcoef(My, AOA)
-    coeff = coef[0, 1]
-    if coeff >= 0: # Might want to include specific interval here
-        return
-
-    #CHECK ZERO PITCHING MOMENT FOR AOA = 0 (IS THIS WHAT WE SHOULD CHECK?)
-    # if My[0] != 0:          # Assuming AoA will be zero at the first position, we can choose this ourselves in vspaero-file either way
-       #  return
-
-    theta = np.polyfit(AOA,My,1)
-
-    y_line = theta[1]+theta[0]*AOA
-
-    plt.scatter(AOA,My)
-    plt.plot(AOA,y_line,'r')
-    plt.title('Pitching moment vs AoA')
-    plt.ylabel('CMy')
-    plt.xlabel('AoA')
-    plt.legend(["Slope coefficient: {}".format(coeff)])
-
-    plt.show()
-
-
 
 
 
@@ -223,29 +181,71 @@ def OptimizeBWB(filename):
     DISA_loi = 0
     # We want maximum lift to drag ratio
 
-
-
-
     # CALCULATIONS (CODE IN PROGRESS)
+
     W = 2 * 9.82
     rho_to = 1.2255
     rho_sp = 1.1677
+
     DynamicP_to = 0.5 * rho_to * V_to ** 2
     DynamicP_spr = 0.5 * rho_sp * V_sp ** 2
 
-    Cl_max = np.max(values[:, 4]) # Find maximum lift for model airfoil LA2573A (maybe found reference for this) and put in 2D-stall model
-    # in vspaero the get Cl-max for model (probably will work)
+    Cl_max = 1.5  # FOR NOW, change when we have real value
     Cl_to = 0.8 * Cl_max
-
-    # Wing_loading = W/Surface_area
 
     Wing_loading = Cl_to * DynamicP_to
 
+    Cl_sp = Wing_loading / DynamicP_spr
 
-    Cl_sp = Wing_loading/DynamicP_spr
-    Cd = 2 # Get from VSPaero?
-    LvD_sp = Cl_sp/Cd  # Lift drag ratio for sprint
 
+
+    # Find optimal AoA
+    def GetAoA(optimalCl, AoA_values, Cl_values):
+
+        AoA_opt = np.interp(optimalCl, Cl_values, AoA_values)
+        return AoA_opt
+
+    AoA_sp = GetAoA(Cl_sp, values[:, 2], values[:, 4])
+
+    # Get pithing moment around centre of gravity for sprint condition
+    def GetMyCG(AoA, My_values, AoA_values):
+
+        My_CG = np.interp(AoA, AoA_values, My_values, )
+        return My_CG
+
+    MyCG_sp = GetMyCG(AoA_sp, values[:, 15], values[:, 2])
+    if MyCG_sp != 0:
+        return
+
+    # CHECK PITCHING MOMENT VS AoA SLOPE
+    coef = np.corrcoef(values[:, 15], values[:, 2])
+    coeff = coef[0, 1]
+    if coeff >= 0:  # Might want to include specific interval here
+        return
+
+    # GET L/D for optimal angle of attack, namely L/D for sprint!
+    def LiftOverDrag(AoA,LD_values,AoA_values):
+
+        L_D = np.interp(AoA,AoA_values,LD_values)
+        return L_D
+
+    L_D_sp = LiftOverDrag(AoA_sp,values[:,9],values[:,2])
+
+
+
+
+    # PLOTTING; NO REAL USE JUST FUN
+    # theta = np.polyfit(AOA, My, 1)
+
+    # y_line = theta[1] + theta[0] * AOA
+
+    # plt.scatter(AOA, My)
+    # plt.plot(AOA, y_line, 'r')
+    # plt.title('Pitching moment vs AoA')
+    # plt.ylabel('CMy')
+    # plt.xlabel('AoA')
+    # plt.legend(["Slope coefficient: {}".format(coeff)])
+    # plt.show()
 
 
 # "uav_it5_thicknessTE_0dot01_twist6-0_wingsplus30mm"
