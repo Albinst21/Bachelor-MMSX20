@@ -194,6 +194,7 @@ def OptimizeBWB(filename):
     Cl_to = 0.8 * Cl_max
 
     Wing_loading = Cl_to * DynamicP_to
+    S = W/Wing_loading
 
     Cl_sp = Wing_loading / DynamicP_spr
 
@@ -214,22 +215,23 @@ def OptimizeBWB(filename):
         return My_CG
 
     MyCG_sp = GetMyCG(AoA_sp, values[:, 15], values[:, 2])
-    if MyCG_sp != 0:
-        return
+    # if MyCG_sp != 0:
+        # return
 
     # CHECK PITCHING MOMENT VS AoA SLOPE
     coef = np.corrcoef(values[:, 15], values[:, 2])
     coeff = coef[0, 1]
-    if coeff >= 0:  # Might want to include specific interval here
-        return
+    # if coeff >= 0:  # Might want to include specific interval here
+        # return
 
     # GET L/D for optimal angle of attack, namely L/D for sprint!
     def LiftOverDrag(AoA,LD_values,AoA_values):
 
-        L_D = np.interp(AoA,AoA_values,LD_values)
+        L_D = np.interp(AoA, AoA_values, LD_values)
         return L_D
 
     L_D_sp = LiftOverDrag(AoA_sp,values[:,9],values[:,2])
+    print(L_D_sp)
 
 
 
@@ -246,6 +248,23 @@ def OptimizeBWB(filename):
     # plt.xlabel('AoA')
     # plt.legend(["Slope coefficient: {}".format(coeff)])
     # plt.show()
+
+
+    maxLD = np.max(values[:,9])
+
+    Cl_loi = np.interp(maxLD, values[:,9], values[:,4])# Max_L/D
+
+    optimal_V_loi = np.sqrt(W/(Cl_loi*0.5 * rho_sp*S))
+    print(optimal_V_loi)
+
+    K = 1.2
+    Cdnoll = np.interp(0, values[:,4], values[:,7])# where CL = 0
+    optimal_V_loiP = (K/(3*Cdnoll))**(1/4)
+    print(optimal_V_loiP)
+
+    # Power = A*optimal_V_loiP**3 + B/optimal_V_loiP
+
+
 
 
 # "uav_it5_thicknessTE_0dot01_twist6-0_wingsplus30mm"
