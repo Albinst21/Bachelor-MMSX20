@@ -17,8 +17,8 @@ def OptimizeBWB(filename):
     path_degengeom = r"C:\Users\abbes\PycharmProjects\KandidatProjekt\OpenVSP-3.26.1-win64\scripts"
 
     # TWIST VALUES
-    ThetaValues = ["0", "0", "0", "0", "0", "0", "0",
-                   "0"]  # Coded for total amount of sections in model, double check this
+    ThetaValues = ["0", "0", "0", "0", "0", "0", "0", "0"]
+    # Coded for total amount of sections in model, double check this
 
     # SWEEP VALUES
     SWEEPValues = ["0", "0", "0", "0", "0", "0", "0", "0"]
@@ -140,7 +140,7 @@ def OptimizeBWB(filename):
 
     # _______________________________________________________________________________________________________________
 
-    # Reads the result from the VSPaero simulation and saves chosen results
+    # Reads the result from the VSPaero simulation and saves results into code
 
     dummy = []
     with open(input_data, mode='r') as file:
@@ -183,6 +183,7 @@ def OptimizeBWB(filename):
 
     # CALCULATIONS (CODE IN PROGRESS)
 
+    # BASIC STUFF
     W = 2 * 9.82
     rho_to = 1.2255
     rho_sp = 1.1677
@@ -215,14 +216,14 @@ def OptimizeBWB(filename):
         return My_CG
 
     MyCG_sp = GetMyCG(AoA_sp, values[:, 15], values[:, 2])
-    # if MyCG_sp != 0:
-        # return
+    if MyCG_sp != 0:
+        return
 
     # CHECK PITCHING MOMENT VS AoA SLOPE
     coef = np.corrcoef(values[:, 15], values[:, 2])
     coeff = coef[0, 1]
-    # if coeff >= 0:  # Might want to include specific interval here
-        # return
+    if coeff >= 0:  # Might want to include specific interval here
+        return
 
     # GET L/D for optimal angle of attack, namely L/D for sprint!
     def LiftOverDrag(AoA,LD_values,AoA_values):
