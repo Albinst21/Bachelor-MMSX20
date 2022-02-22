@@ -1,21 +1,6 @@
 import numpy as np
-import matplotlib.pyplot as plt
-from scipy import interpolate
 
-x = np.linspace(-20,20,50)
+aids = [("1","2","3"), ("12","22","32"), ("13","23","33"), ("14","24","34")]
 
-y = 2+2*x+2*x**2
-
-maxy = 0.4*np.max(y)
-print(maxy)
-
-plt.plot(y,x)
-
-
-aids = interpolate.interp1d(y,x,'quadratic')
-
-k = aids.__call__(653)
-
-print(k)
-
-plt.show()
+for x, y, z in aids:
+    print("X:",x,"Y:", y,"Z:", z)

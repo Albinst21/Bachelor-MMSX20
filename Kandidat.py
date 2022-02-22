@@ -7,8 +7,12 @@ def OptimizeBWB(filename):
     import xml.etree.ElementTree as ET
     import matplotlib.pyplot as plt
 
-    # First step is to generate VSP3 file with parameters of choosing, for now we only have code to change the twist
 
+
+
+
+
+#_____________________________________________________________________________________________________________________
     # Creating paths for objects we want to use such as .vsp3 files and VSPaero program
     # These needs to be specified for the computer working with the script
     path_org = r"C:\Users\abbes\PycharmProjects\KandidatProjekt\Bachelor-MMSX20"
@@ -16,18 +20,27 @@ def OptimizeBWB(filename):
     path_output = "C:/Users/abbes/PycharmProjects/KandidatProjekt/Bachelor-MMSX20"
     path_degengeom = r"C:\Users\abbes\PycharmProjects\KandidatProjekt\OpenVSP-3.26.1-win64\scripts"
 
-    # TWIST VALUES
-    ThetaValues = ["0", "0", "0", "0", "0", "0", "0", "0"]
-    # Coded for total amount of sections in model, double check this
-
-    # SWEEP VALUES
-    SWEEPValues = ["0", "0", "0", "0", "0", "0", "0", "0"]
-
     # Choose geometry to run simulation for
     ORIGINAL_GEOMETRY_NAME = "{}".format(filename)
 
     filename_org = r"{}\{}.vsp3".format(path_org, ORIGINAL_GEOMETRY_NAME)
+#______________________________________________________________________________________________________________________
 
+
+
+
+
+
+
+#______________________________CHANGING GEOMETRY______________________________________________________________________
+    # TWIST VALUES
+    ThetaValues = ["0", "0", "0"]
+    # Coded for total amount of sections in model, double check this
+
+    # SWEEP VALUES
+    SWEEPValues = "5"
+
+    # Do either twist or sweep first and then find the stabilizing values for the next parameter after
     # Part of script that can change twist in wing sections by changing value of Theta
     tree = ET.parse(filename_org)
     root = tree.getroot()
@@ -35,44 +48,14 @@ def OptimizeBWB(filename):
     k = 0  # Counter for the different sections
     for twist in root.iter('Theta'):
 
-        if k == 0:  # This changes twist for section 1 for example
+        if k == 4:
             value = list(dict.items(twist.attrib))
-            value[0] = ('Value', '{}'.format(ThetaValues[k]))
-            new_att = dict(value)
-            twist.attrib = new_att
-        elif k == 1:  # This for section 2
-            value = list(dict.items(twist.attrib))
-            value[0] = ('Value', '{}'.format(ThetaValues[k]))
-            new_att = dict(value)
-            twist.attrib = new_att
-        elif k == 2:
-            value = list(dict.items(twist.attrib))
-            value[0] = ('Value', '{}'.format(ThetaValues[k]))
-            new_att = dict(value)
-            twist.attrib = new_att
-        elif k == 3:
-            value = list(dict.items(twist.attrib))
-            value[0] = ('Value', '{}'.format(ThetaValues[k]))
-            new_att = dict(value)
-            twist.attrib = new_att
-        elif k == 4:
-            value = list(dict.items(twist.attrib))
-            value[0] = ('Value', '{}'.format(ThetaValues[k]))
+            value[0] = ('Value', '{}'.format(ThetaValues[1]))
             new_att = dict(value)
             twist.attrib = new_att
         elif k == 5:
             value = list(dict.items(twist.attrib))
-            value[0] = ('Value', '{}'.format(ThetaValues[k]))
-            new_att = dict(value)
-            twist.attrib = new_att
-        elif k == 6:
-            value = list(dict.items(twist.attrib))
-            value[0] = ('Value', '{}'.format(ThetaValues[k]))
-            new_att = dict(value)
-            twist.attrib = new_att
-        elif k == 7:
-            value = list(dict.items(twist.attrib))
-            value[0] = ('Value', '{}'.format(ThetaValues[k]))
+            value[0] = ('Value', '{}'.format(ThetaValues[2]))
             new_att = dict(value)
             twist.attrib = new_att
         k += 1
@@ -80,44 +63,19 @@ def OptimizeBWB(filename):
     k = 0  # Counter for the different sections
     for sweep in root.iter('Sweep'):
 
-        if k == 0:  # This changes twist for section 1 for example
+        if k == 3:
             value = list(dict.items(sweep.attrib))
-            value[0] = ('Value', '{}'.format(SWEEPValues[k]))
-            new_att = dict(value)
-            sweep.attrib = new_att
-        elif k == 1:  # This for section 2
-            value = list(dict.items(sweep.attrib))
-            value[0] = ('Value', '{}'.format(SWEEPValues[k]))
-            new_att = dict(value)
-            sweep.attrib = new_att
-        elif k == 2:
-            value = list(dict.items(sweep.attrib))
-            value[0] = ('Value', '{}'.format(SWEEPValues[k]))
-            new_att = dict(value)
-            sweep.attrib = new_att
-        elif k == 3:
-            value = list(dict.items(sweep.attrib))
-            value[0] = ('Value', '{}'.format(SWEEPValues[k]))
+            value[0] = ('Value', '{}'.format(SWEEPValues))
             new_att = dict(value)
             sweep.attrib = new_att
         elif k == 4:
             value = list(dict.items(sweep.attrib))
-            value[0] = ('Value', '{}'.format(SWEEPValues[k]))
+            value[0] = ('Value', '{}'.format(SWEEPValues))
             new_att = dict(value)
             sweep.attrib = new_att
         elif k == 5:
             value = list(dict.items(sweep.attrib))
-            value[0] = ('Value', '{}'.format(SWEEPValues[k]))
-            new_att = dict(value)
-            sweep.attrib = new_att
-        elif k == 6:
-            value = list(dict.items(sweep.attrib))
-            value[0] = ('Value', '{}'.format(SWEEPValues[k]))
-            new_att = dict(value)
-            sweep.attrib = new_att
-        elif k == 7:
-            value = list(dict.items(sweep.attrib))
-            value[0] = ('Value', '{}'.format(SWEEPValues[k]))
+            value[0] = ('Value', '{}'.format(SWEEPValues))
             new_att = dict(value)
             sweep.attrib = new_att
         k += 1
@@ -125,8 +83,15 @@ def OptimizeBWB(filename):
     # Writes to a new .vsp3 file that can be analyzed in OpenVSP
     Newfile = "output"
     tree.write('{}.vsp3'.format(Newfile))
+#______________________________________________________________________________________________________________________
 
-    # __________________________________OPENVSP____________________________________________________________________
+
+
+
+
+
+
+# __________________________________OPENVSP___________________________________________________________________________
 
     # Create new degenerate geometry for updated file
     subprocess.run(
@@ -138,9 +103,14 @@ def OptimizeBWB(filename):
     # Collect results from simulation
     input_data = r"{}\{}_DegenGeom.polar".format(path_output, Newfile)
 
-    # _______________________________________________________________________________________________________________
+#______________________________________________________________________________________________________________________
 
-    # Reads the result from the VSPaero simulation and saves results into code
+
+
+
+
+
+#_____________Reads the result from the VSPaero simulation and saves results into code_______________________________
 
     dummy = []
     with open(input_data, mode='r') as file:
@@ -161,10 +131,12 @@ def OptimizeBWB(filename):
             line = file.readline()
     values = np.array(dummy)
 
+#______________________________________________________________________________________________________________________
 
 
 
-    # REQUIREMENTS
+
+#________________________________________________REQUIREMENTS________________________________________________________
     # Take-off
     V_to = 15  # m/s
     alt_to = 0
@@ -180,11 +152,14 @@ def OptimizeBWB(filename):
     alt_loi = 500
     DISA_loi = 0
     # We want maximum lift to drag ratio
+#_____________________________________________________________________________________________________________________
 
-    # CALCULATIONS (CODE IN PROGRESS)
 
-    # BASIC STUFF
-    W = 2 * 9.82
+
+
+#__________________________________INITIAL CALCULATIONS________________________________________________________________
+
+    W = 3 * 9.82
     rho_to = 1.2255
     rho_sp = 1.1677
 
@@ -195,27 +170,24 @@ def OptimizeBWB(filename):
     Cl_to = 0.8 * Cl_max
 
     Wing_loading = Cl_to * DynamicP_to
+
     S = W/Wing_loading
 
     Cl_sp = Wing_loading / DynamicP_spr
+#_____________________________________________________________________________________________________________________
 
 
+
+
+
+
+#_________________________________________________TRIMMING CONDITIONS_________________________________________________
 
     # Find optimal AoA
-    def GetAoA(optimalCl, AoA_values, Cl_values):
-
-        AoA_opt = np.interp(optimalCl, Cl_values, AoA_values)
-        return AoA_opt
-
-    AoA_sp = GetAoA(Cl_sp, values[:, 2], values[:, 4])
+    AoA_sp = np.interp(Cl_sp, values[:, 2], values[:, 4])
 
     # Get pithing moment around centre of gravity for sprint condition
-    def GetMyCG(AoA, My_values, AoA_values):
-
-        My_CG = np.interp(AoA, AoA_values, My_values, )
-        return My_CG
-
-    MyCG_sp = GetMyCG(AoA_sp, values[:, 15], values[:, 2])
+    MyCG_sp = np.interp(AoA_sp, values[:, 15], values[:, 2])
     if MyCG_sp != 0:
         return
 
@@ -226,15 +198,10 @@ def OptimizeBWB(filename):
         return
 
     # GET L/D for optimal angle of attack, namely L/D for sprint!
-    def LiftOverDrag(AoA,LD_values,AoA_values):
-
-        L_D = np.interp(AoA, AoA_values, LD_values)
-        return L_D
-
-    L_D_sp = LiftOverDrag(AoA_sp,values[:,9],values[:,2])
+    L_D_sp = np.interp(AoA_sp,values[:,9],values[:,2])
     print(L_D_sp)
 
-
+#___________________________________________________________________________________________________________________
 
 
     # PLOTTING; NO REAL USE JUST FUN
@@ -251,19 +218,25 @@ def OptimizeBWB(filename):
     # plt.show()
 
 
+
+#___________________MAXIMIZING L/D AND MINIMIZING ENERGY CONSUMPTION__________________________________________________
     maxLD = np.max(values[:,9])
 
-    Cl_loi = np.interp(maxLD, values[:,9], values[:,4])# Max_L/D
+    Cl_loi = np.interp(maxLD, values[:,9], values[:,4]) # Max_L/D
 
-    optimal_V_loi = np.sqrt(W/(Cl_loi*0.5 * rho_sp*S))
+    optimal_V_loi = np.sqrt(Wing_loading * (Cl_loi*0.5 * rho_sp))
     print(optimal_V_loi)
 
-    K = 1.2
-    Cdnoll = np.interp(0, values[:,4], values[:,7])# where CL = 0
-    optimal_V_loiP = (K/(3*Cdnoll))**(1/4)
+    optimal_V_loiP = 0.75*optimal_V_loi
     print(optimal_V_loiP)
 
+
+    K = 1.2 # DOUBLE CHECK THIS
+    Cdnoll = np.interp(0, values[:,4], values[:,7])# where CL = 0?
+
+
     # Power = A*optimal_V_loiP**3 + B/optimal_V_loiP
+#______________________________________________________________________________________________________________________
 
 
 
