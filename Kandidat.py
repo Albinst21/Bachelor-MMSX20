@@ -34,7 +34,7 @@ def OptimizeBWB(filename):
 
 #______________________________CHANGING GEOMETRY______________________________________________________________________
     # TWIST VALUES
-    ThetaValues = ["0", "0", "0"]
+    ThetaValues = ["0", "0"]
     # Coded for total amount of sections in model, double check this
 
     # SWEEP VALUES
@@ -50,12 +50,12 @@ def OptimizeBWB(filename):
 
         if k == 4:
             value = list(dict.items(twist.attrib))
-            value[0] = ('Value', '{}'.format(ThetaValues[1]))
+            value[0] = ('Value', '{}'.format(ThetaValues[0]))
             new_att = dict(value)
             twist.attrib = new_att
         elif k == 5:
             value = list(dict.items(twist.attrib))
-            value[0] = ('Value', '{}'.format(ThetaValues[2]))
+            value[0] = ('Value', '{}'.format(ThetaValues[1]))
             new_att = dict(value)
             twist.attrib = new_att
         k += 1
@@ -166,28 +166,23 @@ def OptimizeBWB(filename):
     DynamicP_to = 0.5 * rho_to * V_to ** 2
     DynamicP_spr = 0.5 * rho_sp * V_sp ** 2
 
-    Cl_max = 1.5  # FOR NOW, change when we have real value
+    Cl_max = 0.632  # FOR NOW, change when we have real value
     Cl_to = 0.8 * Cl_max
 
-    Wing_loading = Cl_to * DynamicP_to
+    W_over_S = Cl_to * DynamicP_to
+    Wing_loading = W_over_S / 9.82
 
-    S = W/Wing_loading
+    Cl_sp = W_over_S / DynamicP_spr
+    # _____________________________________________________________________________________________________________________
 
-    Cl_sp = Wing_loading / DynamicP_spr
-#_____________________________________________________________________________________________________________________
-
-
-
-
-
-
-#_________________________________________________TRIMMING CONDITIONS_________________________________________________
+    # _________________________________________________TRIMMING CONDITIONS_________________________________________________
 
     # Find optimal AoA
-    AoA_sp = np.interp(Cl_sp, values[:, 2], values[:, 4])
+    AoA_sp = np.interp(Cl_sp, values[:, 4], values[:, 2])
 
     # Get pithing moment around centre of gravity for sprint condition
-    MyCG_sp = np.interp(AoA_sp, values[:, 15], values[:, 2])
+    MyCG_sp = np.interp(AoA_sp, values[:, 2], values[:, 15])
+
     if MyCG_sp != 0:
         return
 
@@ -197,45 +192,39 @@ def OptimizeBWB(filename):
     if coeff >= 0:  # Might want to include specific interval here
         return
 
-    # GET L/D for optimal angle of attack, namely L/D for sprint!
-    L_D_sp = np.interp(AoA_sp,values[:,9],values[:,2])
-    print(L_D_sp)
-
-#___________________________________________________________________________________________________________________
+    L_D_sp = np.interp(AoA_sp, values[:, 2], values[:, 9])
 
 
-    # PLOTTING; NO REAL USE JUST FUN
-    # theta = np.polyfit(AOA, My, 1)
-
-    # y_line = theta[1] + theta[0] * AOA
-
-    # plt.scatter(AOA, My)
-    # plt.plot(AOA, y_line, 'r')
-    # plt.title('Pitching moment vs AoA')
-    # plt.ylabel('CMy')
-    # plt.xlabel('AoA')
-    # plt.legend(["Slope coefficient: {}".format(coeff)])
-    # plt.show()
+    # ___________________________________________________________________________________________________________________
 
 
 
-#___________________MAXIMIZING L/D AND MINIMIZING ENERGY CONSUMPTION__________________________________________________
-    maxLD = np.max(values[:,9])
-
-    Cl_loi = np.interp(maxLD, values[:,9], values[:,4]) # Max_L/D
-
-    optimal_V_loi = np.sqrt(Wing_loading * (Cl_loi*0.5 * rho_sp))
-    print(optimal_V_loi)
-
-    optimal_V_loiP = 0.75*optimal_V_loi
-    print(optimal_V_loiP)
 
 
-    K = 1.2 # DOUBLE CHECK THIS
-    Cdnoll = np.interp(0, values[:,4], values[:,7])# where CL = 0?
 
 
-    # Power = A*optimal_V_loiP**3 + B/optimal_V_loiP
+    # ___________________MAXIMIZING L/D AND MINIMIZING ENERGY CONSUMPTION__________________________________________________
+    maxLD = np.max(values[:, 9])
+
+    Cl_loi = np.interp(maxLD, values[:, 9], values[:, 4])  # Max_L/D
+    Cd_loi = np.interp(maxLD, values[:, 9], values[:, 7])
+
+    optimal_V_loi = np.sqrt(W_over_S / (0.5 * rho_sp * Cl_loi))
+
+    optimal_V_loiP = 0.75 * optimal_V_loi
+
+
+
+    vloi = np.sqrt(W_over_S / (0.5 * rho_sp * values[:, 4]))
+    allpower = W * values[:, 7] * (np.sqrt(W_over_S / (0.5 * rho_sp * values[:, 4]))) / values[:, 4]
+
+    Cd_spr = np.interp(Cl_sp, values[:, 4], values[:, 7])
+    Power_spr = W * Cd_spr * V_sp / Cl_sp
+
+    Power_loi = W * Cd_loi * optimal_V_loiP / Cl_loi
+    print("Power consumption for optimal velocity in loiter: " + str(Power_loi) + " W ")
+
+    Total_power = Power_spr + Power_loi
 #______________________________________________________________________________________________________________________
 
 
