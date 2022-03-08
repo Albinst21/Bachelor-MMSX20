@@ -4,7 +4,7 @@ import openmdao.api as om
 from Kandidat import OptimizeBWB
 
 
-class BWBOptimize(om.ExternalCodeComp):             # CORRECT INHERITANCE?
+class BWBOptimizer(om.ExternalCodeComp):  # CORRECT INHERITANCE?
 
     def setup(self):
         self.add_input('sweep', val=0.0)
@@ -23,15 +23,16 @@ class BWBOptimize(om.ExternalCodeComp):             # CORRECT INHERITANCE?
 
         outputs['power'] = OptimizeBWB(sweep, twist_one, twist_two)
 
-#________OPTIMIZATION___________________________________________________
+
+# ________OPTIMIZATION___________________________________________________
 
 prob = om.Problem()
 model = prob.model
 
-model.add_subsystem('p', BWBOptimize())
+model.add_subsystem('p', BWBOptimizer())
 
 prob.driver = om.ScipyOptimizeDriver()
-prob.driver.options['optimizer'] = 'SLSQP'          # NOT SURE WHAT SPECIFIC OPTIMIZER IS NEEDED HERE
+prob.driver.options['optimizer'] = 'SLSQP'  # NOT SURE WHAT SPECIFIC OPTIMIZER IS NEEDED HERE
 
 prob.model.add_design_var('p.sweep', lower=0, upper=50)
 prob.model.add_design_var('p.twist_one', lower=0, upper=50)
@@ -50,4 +51,3 @@ prob.set_val('p.twist_one', 5)
 prob.set_val('p.twist_two', 7)
 
 prob.run_driver()
-
