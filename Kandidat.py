@@ -1,7 +1,7 @@
 # Python function to calculate aerodynamic performance for BWB
 
 
-def OptimizeBWB(filename):
+def OptimizeBWB(sweep, twist1, twist2):
     import subprocess
     import numpy as np
     import xml.etree.ElementTree as ET
@@ -21,7 +21,7 @@ def OptimizeBWB(filename):
     path_degengeom = r"C:\Users\abbes\PycharmProjects\KandidatProjekt\OpenVSP-3.26.1-win64\scripts"
 
     # Choose geometry to run simulation for
-    ORIGINAL_GEOMETRY_NAME = "{}".format(filename)
+    ORIGINAL_GEOMETRY_NAME = "uav_it5_thicknessTE_0dot01_twist6-0_wingsplus30mm"
 
     filename_org = r"{}\{}.vsp3".format(path_org, ORIGINAL_GEOMETRY_NAME)
 #______________________________________________________________________________________________________________________
@@ -34,11 +34,11 @@ def OptimizeBWB(filename):
 
 #______________________________CHANGING GEOMETRY______________________________________________________________________
     # TWIST VALUES
-    ThetaValues = ["0", "0"]
+    ThetaValues = [f"{twist1}", f"{twist2}"]
     # Coded for total amount of sections in model, double check this
 
     # SWEEP VALUES
-    SWEEPValues = "5"
+    SWEEPValues = f"{sweep}"
 
     # Do either twist or sweep first and then find the stabilizing values for the next parameter after
     # Part of script that can change twist in wing sections by changing value of Theta
@@ -162,6 +162,7 @@ def OptimizeBWB(filename):
     W = 3 * 9.82
     rho_to = 1.2255
     rho_sp = 1.1677
+    effiency = 0.6
 
     DynamicP_to = 0.5 * rho_to * V_to ** 2
     DynamicP_spr = 0.5 * rho_sp * V_sp ** 2
@@ -208,7 +209,7 @@ def OptimizeBWB(filename):
 
 
 
-    # ___________________MAXIMIZING L/D AND MINIMIZING ENERGY CONSUMPTION_______________________________________________
+# ___________________MAXIMIZING L/D AND MINIMIZING ENERGY CONSUMPTION___________________________________________________
     maxLD = np.max(values[:, 9])
 
     Cl_loi = np.interp(maxLD, values[:, 9], values[:, 4])  # Max_L/D
@@ -224,13 +225,14 @@ def OptimizeBWB(filename):
     allpower = W * values[:, 7] * (np.sqrt(W_over_S / (0.5 * rho_sp * values[:, 4]))) / values[:, 4]
 
     Cd_spr = np.interp(Cl_sp, values[:, 4], values[:, 7])
-    Power_spr = W * Cd_spr * V_sp / Cl_sp
 
-    Power_loi = W * Cd_loi * optimal_V_loiP / Cl_loi
+
+    Power_spr = (W * Cd_spr * V_sp / Cl_sp)/effiency
+
+    Power_loi = (W * Cd_loi * optimal_V_loiP / Cl_loi)/effiency
     print("Power consumption for optimal velocity in loiter: " + str(Power_loi) + " W ")
 
-    Total_power = Power_spr + Power_loi
-    #___________________________________________________________________________________________________________________
+#_______________________________________________________________________________________________________________________
 
 
 

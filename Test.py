@@ -3,7 +3,7 @@ import numpy as np
 import xml.etree.ElementTree as ET
 import matplotlib.pyplot as plt
 
-Newfile = "uav_it5_thicknessTE_0dot01_twist6-0_wingsplus30mm"
+Newfile = "6degTwistGridTesting"
 
 path_org = r"C:\Users\abbes\PycharmProjects\KandidatProjekt\Bachelor-MMSX20"
 path_vspaero = r"C:\Users\abbes\PycharmProjects\KandidatProjekt\OpenVSP-3.26.1-win64"
@@ -76,6 +76,7 @@ Cl_to = 0.8 * Cl_max
 
 W_over_S = Cl_to * DynamicP_to
 Wing_loading = W_over_S/9.82
+
 print("Wing loading: " + str(Wing_loading) + " kg/m^2 ")
 
 
@@ -151,7 +152,12 @@ optimal_V_loi = np.sqrt(W_over_S/(0.5*rho_sp*Cl_loi))
 
 
 optimal_V_loiP = 0.75 * optimal_V_loi
-print("Optimal velocity in loiter for L/D and power consumption: ", optimal_V_loiP)
+
+newCl_loi = W_over_S/(0.5*rho_sp*optimal_V_loiP**2)
+LD_in_loi = np.interp(newCl_loi, values[:,4], values[:,9])
+
+print("Optimal velocity in loiter for L/D and power consumption: " + str(optimal_V_loiP) + " m/s ")
+print("L/D in loiter for optimal loiter velocity: ", LD_in_loi)
 
 # K = 1.2 # DOUBLE CHECK THIS
 # Cdnoll = np.interp(0, values[:,4], values[:,7])# where CL = 0?
@@ -165,5 +171,10 @@ plt.ylabel('PowerC')
 plt.xlabel('V_loi')
 plt.show()
 
-Power = W*Cd_loi*optimal_V_loiP/Cl_loi
-print("Power consumption for optimal velocity in loiter: " + str(Power) + " W ")
+Cd_spr = np.interp(Cl_sp, values[:, 4], values[:, 7])
+Power_spr = (W * Cd_spr * V_sp / Cl_sp)/0.6
+
+Power_loi = (W * Cd_loi * optimal_V_loiP / Cl_loi)/0.6
+print("Power consumption for optimal velocity in loiter: " + str(Power_loi) + " W ")
+
+print("Power consumption for sprint: " + str(Power_spr) + " W ")
