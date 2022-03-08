@@ -5,14 +5,10 @@ def OptimizeBWB(sweep, twist1, twist2):
     import subprocess
     import numpy as np
     import xml.etree.ElementTree as ET
+    from scipy.interpolate import interp1d
     import matplotlib.pyplot as plt
 
-
-
-
-
-
-#_____________________________________________________________________________________________________________________
+    # _____________________________________________________________________________________________________________________
     # Creating paths for objects we want to use such as .vsp3 files and VSPaero program
     # These needs to be specified for the computer working with the script
     path_org = r"C:\Users\abbes\PycharmProjects\KandidatProjekt\Bachelor-MMSX20"
@@ -24,15 +20,9 @@ def OptimizeBWB(sweep, twist1, twist2):
     ORIGINAL_GEOMETRY_NAME = "uav_it5_thicknessTE_0dot01_twist6-0_wingsplus30mm"
 
     filename_org = r"{}\{}.vsp3".format(path_org, ORIGINAL_GEOMETRY_NAME)
-#______________________________________________________________________________________________________________________
+    # ______________________________________________________________________________________________________________________
 
-
-
-
-
-
-
-#______________________________CHANGING GEOMETRY______________________________________________________________________
+    # ______________________________CHANGING GEOMETRY______________________________________________________________________
     # TWIST VALUES
     ThetaValues = [f"{twist1}", f"{twist2}"]
     # Coded for total amount of sections in model, double check this
@@ -83,15 +73,9 @@ def OptimizeBWB(sweep, twist1, twist2):
     # Writes to a new .vsp3 file that can be analyzed in OpenVSP
     Newfile = "output"
     tree.write('{}.vsp3'.format(Newfile))
-#______________________________________________________________________________________________________________________
+    # ______________________________________________________________________________________________________________________
 
-
-
-
-
-
-
-# __________________________________OPENVSP___________________________________________________________________________
+    # __________________________________OPENVSP___________________________________________________________________________
 
     # Create new degenerate geometry for updated file
     subprocess.run(
@@ -103,14 +87,9 @@ def OptimizeBWB(sweep, twist1, twist2):
     # Collect results from simulation
     input_data = r"{}\{}_DegenGeom.polar".format(path_output, Newfile)
 
-#______________________________________________________________________________________________________________________
+    # ______________________________________________________________________________________________________________________
 
-
-
-
-
-
-#_____________Reads the result from the VSPaero simulation and saves results into code_______________________________
+    # _____________Reads the result from the VSPaero simulation and saves results into code_______________________________
 
     dummy = []
     with open(input_data, mode='r') as file:
@@ -131,12 +110,9 @@ def OptimizeBWB(sweep, twist1, twist2):
             line = file.readline()
     values = np.array(dummy)
 
-#______________________________________________________________________________________________________________________
+    # ______________________________________________________________________________________________________________________
 
-
-
-
-#________________________________________________REQUIREMENTS________________________________________________________
+    # ________________________________________________REQUIREMENTS________________________________________________________
     # Take-off
     V_to = 15  # m/s
     alt_to = 0
@@ -152,12 +128,9 @@ def OptimizeBWB(sweep, twist1, twist2):
     alt_loi = 500
     DISA_loi = 0
     # We want maximum lift to drag ratio
-#_____________________________________________________________________________________________________________________
+    # _____________________________________________________________________________________________________________________
 
-
-
-
-#__________________________________INITIAL CALCULATIONS________________________________________________________________
+    # __________________________________INITIAL CALCULATIONS________________________________________________________________
 
     W = 3 * 9.82
     rho_to = 1.2255
@@ -172,14 +145,11 @@ def OptimizeBWB(sweep, twist1, twist2):
 
     W_over_S = Cl_to * DynamicP_to
     Wing_loading = W_over_S / 9.82
+    S = W / W_over_S
 
     Cl_sp = W_over_S / DynamicP_spr
+    Cd_spr = np.interp(Cl_sp, values[:, 4], values[:, 7])
     # _____________________________________________________________________________________________________________________
-
-
-
-
-
 
     # _________________________________________________TRIMMING CONDITIONS_________________________________________________
 
@@ -200,42 +170,34 @@ def OptimizeBWB(sweep, twist1, twist2):
 
     L_D_sp = np.interp(AoA_sp, values[:, 2], values[:, 9])
 
-
     # __________________________________________________________________________________________________________________
 
+    # ___________________MAXIMIZING L/D AND MINIMIZING ENERGY CONSUMPTION___________________________________________________
+    maxLD = np.max(values[:, 9])                            # GETTING MAX L/D
 
+    f2 = interp1d(values[:, 9], values[:, 4], kind='cubic') # FINDING CL FOR MAX L/D
+    Cl_loi = f2(maxLD)
 
+    optimal_V_loi = np.sqrt(W_over_S / (0.5 * rho_sp * Cl_loi)) # FINDING VELOCITY FOR MAX L/D
 
+    optimal_V_loiP = 0.75 * optimal_V_loi                       # MULTIPLY WITH 0.75 TO GET VELOCTY FOR POWER CONSUM-
 
+    newCl_loi = W / (S * rho_sp * 0.5 * optimal_V_loiP ** 2)        # NEW CL FOR THE NEW VELOCITY
+    newCd_loi = np.interp(newCl_loi, values[:, 4], values[:, 7])    # GET CD THROUGH THE NEW CL
 
+    Power_spr = (W * Cd_spr * V_sp / Cl_sp)                         # POWER SPRINT
 
-# ___________________MAXIMIZING L/D AND MINIMIZING ENERGY CONSUMPTION___________________________________________________
-    maxLD = np.max(values[:, 9])
+    Power_loi = (W * newCd_loi * optimal_V_loiP / newCl_loi)        # POWER LOITER
 
-    Cl_loi = np.interp(maxLD, values[:, 9], values[:, 4])  # Max_L/D
-    Cd_loi = np.interp(maxLD, values[:, 9], values[:, 7])
+    power_total = Power_loi + Power_spr                             # THIS IS OBVIOUSLY WRONG, BUT WE NEED TO RETURN
+                                                                    # SOMETHING?
 
-    optimal_V_loi = np.sqrt(W_over_S / (0.5 * rho_sp * Cl_loi))
-
-    optimal_V_loiP = 0.75 * optimal_V_loi
-
-
-
-    vloi = np.sqrt(W_over_S / (0.5 * rho_sp * values[:, 4]))
-    allpower = W * values[:, 7] * (np.sqrt(W_over_S / (0.5 * rho_sp * values[:, 4]))) / values[:, 4]
-
-    Cd_spr = np.interp(Cl_sp, values[:, 4], values[:, 7])
-
-
-    Power_spr = (W * Cd_spr * V_sp / Cl_sp)/effiency
-
-    Power_loi = (W * Cd_loi * optimal_V_loiP / Cl_loi)/effiency
     print("Power consumption for optimal velocity in loiter: " + str(Power_loi) + " W ")
+    return power_total
 
-#_______________________________________________________________________________________________________________________
 
-
+# _______________________________________________________________________________________________________________________
 
 
 # "uav_it5_thicknessTE_0dot01_twist6-0_wingsplus30mm"
-r = OptimizeBWB("output")
+out = OptimizeBWB(1, 2, 3)
