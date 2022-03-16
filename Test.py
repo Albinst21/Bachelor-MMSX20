@@ -2,6 +2,7 @@ import subprocess
 import numpy as np
 import xml.etree.ElementTree as ET
 import matplotlib.pyplot as plt
+from scipy.interpolate import interp1d
 
 Newfile = "6degTwistGridTesting"
 
@@ -11,7 +12,7 @@ path_output = "C:/Users/abbes/PycharmProjects/KandidatProjekt/Bachelor-MMSX20"
 path_degengeom = r"C:\Users\abbes\PycharmProjects\KandidatProjekt\OpenVSP-3.26.1-win64\scripts"
 
 
-subprocess.run(r"{}\vspaero.exe -omp 4 {}/{}_DegenGeom".format(path_vspaero, path_output, Newfile), shell=True)
+# subprocess.run(r"{}\vspaero.exe -omp 4 {}/{}_DegenGeom".format(path_vspaero, path_output, Newfile), shell=True)
 
 # Collect results from simulation
 input_data = r"{}\{}_DegenGeom.polar".format(path_output, Newfile)
@@ -64,46 +65,53 @@ DISA_loi = 0
 
 # __________________________________INITIAL CALCULATIONS________________________________________________________________
 
-W = 3 * 9.82
+W = 2.5 * 9.82
 rho_to = 1.2255
 rho_sp = 1.1677
 
 DynamicP_to = 0.5 * rho_to * V_to ** 2
 DynamicP_spr = 0.5 * rho_sp * V_sp ** 2
 
+## CL-TAKEOFF ##
 Cl_max = 0.632  # FOR NOW, change when we have real value
 Cl_to = 0.8 * Cl_max
+print("CL takeoff: ", Cl_to)
 
+
+## WING LOADING ##
 W_over_S = Cl_to * DynamicP_to
 Wing_loading = W_over_S/9.82
-
+S = W/W_over_S
 print("Wing loading: " + str(Wing_loading) + " kg/m^2 ")
 
+## LIFT TAKEOFF ##
+# Lift_to = Cl_to*S*DynamicP_to
+# print("Lift Take off: ", Lift_to, " N ")
 
+## CL SPRINT ##
 Cl_sp = W_over_S / DynamicP_spr
 print("CL Sprint: ", Cl_sp)
+
+## LIFT SPRINT ##
+# Lift_sp = Cl_sp*S*DynamicP_spr
+# print("Lift Sprint: ", Lift_sp, " N ")
 # _____________________________________________________________________________________________________________________
 
 
 # _________________________________________________TRIMMING CONDITIONS_________________________________________________
 
-# Find optimal AoA
-plt.plot(values[:, 2], values[:, 4])
-plt.title('CL vs AoA')
-plt.ylabel('CL')
-plt.xlabel('AoA')
-plt.show()
 
+## AOA SPRINT ##
 AoA_sp = np.interp(Cl_sp, values[:, 4], values[:,2])
 print("Angle of attack in sprint: ", AoA_sp)
 
-# Get pithing moment around centre of gravity for sprint condition
-plt.plot(values[:, 2], values[:, 15])
-plt.title('Pitching moment vs AoA')
-plt.ylabel('CMy')
-plt.xlabel('AoA')
-plt.show()
+## CD AND TRUST SPRINT ##
+Cd_sp = np.interp(Cl_sp, values[:,4], values[:,7])
+print("CD for sprint: ", Cd_sp)
+Drag_sp = Cd_sp*S*DynamicP_spr
+print("Drag/Thrust in sprint: ", Drag_sp , " N ")
 
+######
 MyCG_sp = np.interp(AoA_sp, values[:, 2],values[:, 15])
 
 # if MyCG_sp != 0:
@@ -113,68 +121,93 @@ coef = np.corrcoef(values[:, 15], values[:, 2])
 coeff = coef[0, 1]
 # if coeff >= 0:  # Might want to include specific interval here
 # return
+#######
 
-# GET L/D for optimal angle of attack, namely L/D for sprint!
-plt.plot(values[:, 2], values[:, 9])
-plt.title('L/D vs AoA')
-plt.ylabel('L/D')
-plt.xlabel('AoA')
-plt.show()
 
+## LIFT OVER DRAG SPRINT ##
 L_D_sp = np.interp(AoA_sp, values[:, 2], values[:,9])
 print("Lift over drag in sprint: ", L_D_sp)
 
 # ___________________________________________________________________________________________________________________
 
 
-# PLOTTING; NO REAL USE JUST FUN
-# theta = np.polyfit(AOA, My, 1)
-
-# y_line = theta[1] + theta[0] * AOA
-
-# plt.scatter(AOA, My)
-# plt.plot(AOA, y_line, 'r')
-# plt.title('Pitching moment vs AoA')
-# plt.ylabel('CMy')
-# plt.xlabel('AoA')
-# plt.legend(["Slope coefficient: {}".format(coeff)])
-# plt.show()
 
 
 # ___________________MAXIMIZING L/D AND MINIMIZING ENERGY CONSUMPTION__________________________________________________
+
+## MAX LIFT OVER DRAG ##
 maxLD = np.max(values[:, 9])
 print("Maximal lift over drag: ", maxLD)
 
-Cl_loi = np.interp(maxLD, values[:, 9], values[:, 4])  # Max_L/D
-Cd_loi = np.interp(maxLD, values[:, 9], values[:, 7])
+# print("Optimal lift over drag for power consumption: ", optimalLD)
+f1 = interp1d(values[:,9], values[:,2], kind='cubic')
+AoA_loi = f1(maxLD)
+print("Angle of Attack for loiter with max L/D: ", AoA_loi)
+f2 = interp1d(values[:,9], values[:,4], kind='cubic')
+Cl_loi = f2(maxLD)
 
-optimal_V_loi = np.sqrt(W_over_S/(0.5*rho_sp*Cl_loi))
 
 
-optimal_V_loiP = 0.75 * optimal_V_loi
+## CL and CD for max L/D ##
+# Cl_loi = np.interp(AoA_loi, values[:, 2], values[:, 4]) # Max_L/D
+f3 = interp1d(values[:, 9], values[:, 7])
+Cd_loi = f3(maxLD)
+print(" CL for max L/D: ", Cl_loi)
+# print("CD for loiter with respect to power consumption: ", Cd_loi)
 
-newCl_loi = W_over_S/(0.5*rho_sp*optimal_V_loiP**2)
-LD_in_loi = np.interp(newCl_loi, values[:,4], values[:,9])
 
-print("Optimal velocity in loiter for L/D and power consumption: " + str(optimal_V_loiP) + " m/s ")
-print("L/D in loiter for optimal loiter velocity: ", LD_in_loi)
 
-# K = 1.2 # DOUBLE CHECK THIS
-# Cdnoll = np.interp(0, values[:,4], values[:,7])# where CL = 0?
 
-vloi = np.sqrt(W_over_S/(0.5*rho_sp*values[:,4]))
-allpower = W*values[:, 7]*(np.sqrt(W_over_S/(0.5*rho_sp*values[:,4])))/values[:,4]
+## VELOCITY LOITER ##
+optimal_V_loi = np.sqrt(W/(S*0.5*rho_sp*Cl_loi))
 
-plt.plot(vloi, allpower)
-plt.title('Power consumption vs Velocity in loiter')
-plt.ylabel('PowerC')
-plt.xlabel('V_loi')
+
+print("MAX LOITER VELOCITY: ", optimal_V_loi, " m/s ")
+newvel = 0.766*optimal_V_loi
+print("NEW velocity at 0.766% of old velocity: ", newvel, " m/s ")
+
+
+
+newCl_loi = W/(S*rho_sp*0.5*newvel**2)
+print("New CL with 76% velocity: ", newCl_loi)
+AoAnew_loi = np.interp(newCl_loi, values[:, 4], values[:,2])
+
+print(AoAnew_loi)
+
+newCd_loi = np.interp(newCl_loi, values[:,4], values[:,7])
+
+
+
+
+## THRUST IN LOITER ##
+Drag_loi= newCd_loi*S*0.5*rho_sp*newvel**2
+print("Drag/Thrust in loiter: ", Drag_loi, " N ")
+
+
+aids = 0.866*maxLD
+
+f4 = interp1d(values[:,9], values[:,2], kind='cubic')
+AoA_loi1 = f4(10)
+print("AOA: ", AoA_loi1)
+plt.plot(values[:,2], values[:,9])
 plt.show()
 
-Cd_spr = np.interp(Cl_sp, values[:, 4], values[:, 7])
-Power_spr = (W * Cd_spr * V_sp / Cl_sp)/0.6
 
-Power_loi = (W * Cd_loi * optimal_V_loiP / Cl_loi)/0.6
+## LIFT IN LOITER ##
+# Lift_loi = newCl_loi*S*0.5*rho_sp*optimal_V_loiP**2
+# print("Lift in loiter: ", Lift_loi, " N ")
+
+## LIFT OVER DRAG IN LOITER WITH BEST POWER CONSUMPTION ##
+print("Optimal velocity in loiter for L/D and power consumption: " + str(optimal_V_loi) + " m/s ")
+# print("L/D in loiter for optimal loiter velocity: ", optimLD)
+
+
+Cd_spr = np.interp(Cl_sp, values[:, 4], values[:, 7])
+
+## POWER CALCULATIONS ##
+Power_loi = (W * newCd_loi * newvel / newCl_loi)
 print("Power consumption for optimal velocity in loiter: " + str(Power_loi) + " W ")
 
+
+Power_spr = (W * Cd_spr * V_sp / Cl_sp)
 print("Power consumption for sprint: " + str(Power_spr) + " W ")

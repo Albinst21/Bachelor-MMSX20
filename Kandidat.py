@@ -133,9 +133,8 @@ def OptimizeBWB(sweep, twist1, twist2):
     # __________________________________INITIAL CALCULATIONS________________________________________________________________
 
     W = 3 * 9.82
-    rho_to = 1.2255
-    rho_sp = 1.1677
-    effiency = 0.6
+    rho_to = 1.2255 # For take off altitude 0m
+    rho_sp = 1.1677 # For sprint altitude 500m
 
     DynamicP_to = 0.5 * rho_to * V_to ** 2
     DynamicP_spr = 0.5 * rho_sp * V_sp ** 2
@@ -189,11 +188,11 @@ def OptimizeBWB(sweep, twist1, twist2):
 
     Power_loi = (W * newCd_loi * optimal_V_loiP / newCl_loi)        # POWER LOITER
 
-    power_total = Power_loi + Power_spr                             # THIS IS OBVIOUSLY WRONG, BUT WE NEED TO RETURN
+    # power_total = Power_loi + Power_spr                             # THIS IS OBVIOUSLY WRONG, BUT WE NEED TO RETURN
                                                                     # SOMETHING?
 
     print("Power consumption for optimal velocity in loiter: " + str(Power_loi) + " W ")
-    return power_total
+    return Power_loi
 
 
 # _______________________________________________________________________________________________________________________
