@@ -158,14 +158,9 @@ def OptimizeBWB(sweep, twist1, twist2):
     # Get pithing moment around centre of gravity for sprint condition
     MyCG_sp = np.interp(AoA_sp, values[:, 2], values[:, 15])
 
-    if MyCG_sp != 0:
-        return
-
     # CHECK PITCHING MOMENT VS AoA SLOPE
     coef = np.corrcoef(values[:, 15], values[:, 2])
     coeff = coef[0, 1]
-    if coeff >= 0:  # Might want to include specific interval here
-        return
 
     L_D_sp = np.interp(AoA_sp, values[:, 2], values[:, 9])
 
@@ -192,7 +187,7 @@ def OptimizeBWB(sweep, twist1, twist2):
                                                                     # SOMETHING?
 
     print("Power consumption for optimal velocity in loiter: " + str(Power_loi) + " W ")
-    return Power_loi
+    return Power_loi, MyCG_sp, coeff # add pitch moment, constrains
 
 
 # _______________________________________________________________________________________________________________________
