@@ -8,7 +8,7 @@ from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 
 
-def OptimizeBWB(sweep: int, twist1: int, twist2: int):
+def OptimizeBWB(sweep, twist1, twist2):
     # __________________________________________________________________________________________________________________
     # Creating paths for objects we want to use such as .vsp3 files and VSPaero program
     # These needs to be specified for the computer working with the script
@@ -18,7 +18,7 @@ def OptimizeBWB(sweep: int, twist1: int, twist2: int):
     path_degengeom = r"C:\Users\abbes\PycharmProjects\KandidatProjekt\OpenVSP-3.26.1-win64\scripts"
 
     # Choose geometry to run simulation for
-    ORIGINAL_GEOMETRY_NAME = "uav_it5_thicknessTE_0dot01_twist6-0_wingsplus30mm"
+    ORIGINAL_GEOMETRY_NAME = "6degTwistGridTesting2"
 
     filename_org = r"{}\{}.vsp3".format(path_org, ORIGINAL_GEOMETRY_NAME)
     # ___________________________________________________________________________________________________________________
@@ -54,12 +54,12 @@ def OptimizeBWB(sweep: int, twist1: int, twist2: int):
     k = 0  # Counter for the different sections
     for sweep in root.iter('Sweep'):
 
-        if k == 3:
-            value = list(dict.items(sweep.attrib))
-            value[0] = ('Value', '{}'.format(SWEEPValues))
-            new_att = dict(value)
-            sweep.attrib = new_att
-        elif k == 4:
+        # if k == 3:
+            # value = list(dict.items(sweep.attrib))
+            # value[0] = ('Value', '{}'.format(SWEEPValues))
+            # new_att = dict(value)
+            # sweep.attrib = new_att
+        if k == 4:
             value = list(dict.items(sweep.attrib))
             value[0] = ('Value', '{}'.format(SWEEPValues))
             new_att = dict(value)
@@ -194,4 +194,6 @@ def OptimizeBWB(sweep: int, twist1: int, twist2: int):
 
 
 # "uav_it5_thicknessTE_0dot01_twist6-0_wingsplus30mm"
-# out = OptimizeBWB(1, 2, 3)
+out = OptimizeBWB(18, 14, 14)
+
+# print(out)
