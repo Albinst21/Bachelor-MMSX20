@@ -194,6 +194,6 @@ def OptimizeBWB(sweep, twist1, twist2):
 
 
 # "uav_it5_thicknessTE_0dot01_twist6-0_wingsplus30mm"
-out = OptimizeBWB(18, 14, 14)
+# out = OptimizeBWB(18, 14, 14)
 
 # print(out)
