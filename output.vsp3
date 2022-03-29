@@ -869,7 +869,7 @@
                 <Sec_Sweep_Location Value="1.000000000000000000e+00" ID="FRVCYGMWGBX" />
                 <SectTess_U Value="1.000000000000000000e+01" ID="SRMBWZIZDLE" />
                 <Span Value="5.000000000000000278e-02" ID="SMOXTDVMXKK" />
-                <Sweep Value="[10.]" ID="HFLXLEHLFQL" />
+                <Sweep Value="1" ID="HFLXLEHLFQL" />
                 <Sweep_Location Value="0.000000000000000000e+00" ID="HAMNRJROVAN" />
                 <Taper Value="4.210526315789473450e-01" ID="FTHJTOLBCML" />
                 <Tip_Chord Value="1.600000000000000033e-01" ID="BIYPXUXOLNR" />
@@ -997,7 +997,7 @@
                 <Sec_Sweep_Location Value="1.000000000000000000e+00" ID="ZZLTRYPAUCW" />
                 <SectTess_U Value="3.000000000000000000e+01" ID="LZEULPTGOAR" />
                 <Span Value="2.370000000000000162e-01" ID="ZLYTFKAHIEJ" />
-                <Sweep Value="[10.]" ID="HHMEXPIHTFJ" />
+                <Sweep Value="1" ID="HHMEXPIHTFJ" />
                 <Sweep_Location Value="0.000000000000000000e+00" ID="LBTEVQWXWAW" />
                 <Taper Value="7.187500000000000000e-01" ID="PCWYZIRDQUZ" />
                 <Tip_Chord Value="1.150000000000000050e-01" ID="WXSGJAYPTUR" />
@@ -1062,7 +1062,7 @@
                     <Invert Value="0.000000000000000000e+00" ID="SPYOVABNTLC" />
                     <Scale Value="1.000000000000000000e+00" ID="BDFRRWOUZGJ" />
                     <ShiftLE Value="0.000000000000000000e+00" ID="UFUIRXCGNCP" />
-                    <Theta Value="[5.]" ID="PZGLBUNWFGM" />
+                    <Theta Value="2" ID="PZGLBUNWFGM" />
                     <ThickChord Value="1.010178128345329412e-01" ID="HHRENMPKSRG" />
                   </XSecCurve>
                   <XSecCurve_Background>
@@ -1125,7 +1125,7 @@
                 <Sec_Sweep_Location Value="1.000000000000000000e+00" ID="HCLDHSMZKSQ" />
                 <SectTess_U Value="3.000000000000000000e+01" ID="LTHGDQAZBEP" />
                 <Span Value="2.379999999999999338e-01" ID="EXZNOGFRVLQ" />
-                <Sweep Value="[10.]" ID="JVFNRWYPGKQ" />
+                <Sweep Value="1" ID="JVFNRWYPGKQ" />
                 <Sweep_Location Value="0.000000000000000000e+00" ID="VYOYTWQWYTZ" />
                 <Taper Value="6.086956521739130821e-01" ID="FDDKFGJLVQQ" />
                 <Tip_Chord Value="7.000000000000000666e-02" ID="HEYCFGXUOQQ" />
@@ -1190,7 +1190,7 @@
                     <Invert Value="0.000000000000000000e+00" ID="UVCWNCLAWHC" />
                     <Scale Value="1.000000000000000000e+00" ID="PWQUEHAAEFM" />
                     <ShiftLE Value="0.000000000000000000e+00" ID="SHRWEMYPUYT" />
-                    <Theta Value="[7.]" ID="NXMKWUJKJKE" />
+                    <Theta Value="3" ID="NXMKWUJKJKE" />
                     <ThickChord Value="1.010178128345329412e-01" ID="XBEPOEOKKLO" />
                   </XSecCurve>
                   <XSecCurve_Background>

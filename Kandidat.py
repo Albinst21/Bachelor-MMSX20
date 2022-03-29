@@ -1,14 +1,15 @@
 # Python function to calculate aerodynamic performance for BWB
+import math
+import subprocess
+from scipy.stats import linregress
+import numpy as np
+import xml.etree.ElementTree as ET
+from scipy.interpolate import interp1d
+import matplotlib.pyplot as plt
 
 
-def OptimizeBWB(sweep, twist1, twist2):
-    import subprocess
-    import numpy as np
-    import xml.etree.ElementTree as ET
-    from scipy.interpolate import interp1d
-    import matplotlib.pyplot as plt
-
-    # _____________________________________________________________________________________________________________________
+def OptimizeBWB(sweep: int, twist1: int, twist2: int):
+    # __________________________________________________________________________________________________________________
     # Creating paths for objects we want to use such as .vsp3 files and VSPaero program
     # These needs to be specified for the computer working with the script
     path_org = r"C:\Users\abbes\PycharmProjects\KandidatProjekt\Bachelor-MMSX20"
@@ -20,9 +21,9 @@ def OptimizeBWB(sweep, twist1, twist2):
     ORIGINAL_GEOMETRY_NAME = "uav_it5_thicknessTE_0dot01_twist6-0_wingsplus30mm"
 
     filename_org = r"{}\{}.vsp3".format(path_org, ORIGINAL_GEOMETRY_NAME)
-    # ______________________________________________________________________________________________________________________
+    # ___________________________________________________________________________________________________________________
 
-    # ______________________________CHANGING GEOMETRY______________________________________________________________________
+    # ______________________________CHANGING GEOMETRY___________________________________________________________________
     # TWIST VALUES
     ThetaValues = [f"{twist1}", f"{twist2}"]
     # Coded for total amount of sections in model, double check this
@@ -133,8 +134,8 @@ def OptimizeBWB(sweep, twist1, twist2):
     # __________________________________INITIAL CALCULATIONS________________________________________________________________
 
     W = 3 * 9.82
-    rho_to = 1.2255 # For take off altitude 0m
-    rho_sp = 1.1677 # For sprint altitude 500m
+    rho_to = 1.2255  # For take off altitude 0m
+    rho_sp = 1.1677  # For sprint altitude 500m
 
     DynamicP_to = 0.5 * rho_to * V_to ** 2
     DynamicP_spr = 0.5 * rho_sp * V_sp ** 2
@@ -159,39 +160,38 @@ def OptimizeBWB(sweep, twist1, twist2):
     MyCG_sp = np.interp(AoA_sp, values[:, 2], values[:, 15])
 
     # CHECK PITCHING MOMENT VS AoA SLOPE
-    coef = np.corrcoef(values[:, 15], values[:, 2])
-    coeff = coef[0, 1]
+    coeff = math.atan(linregress(values[:, 2], values[:, 15])[0])
 
     L_D_sp = np.interp(AoA_sp, values[:, 2], values[:, 9])
 
     # __________________________________________________________________________________________________________________
 
-    # ___________________MAXIMIZING L/D AND MINIMIZING ENERGY CONSUMPTION___________________________________________________
-    maxLD = np.max(values[:, 9])                            # GETTING MAX L/D
+    # ___________________MAXIMIZING L/D AND MINIMIZING ENERGY CONSUMPTION_______________________________________________
+    maxLD = np.max(values[:, 9])  # GETTING MAX L/D
 
-    f2 = interp1d(values[:, 9], values[:, 4], kind='cubic') # FINDING CL FOR MAX L/D
-    Cl_loi = f2(maxLD)
+    # STUFF WE DONT NEED________________________________________________________________________________________________
+    # f2 = interp1d(values[:, 9], values[:, 4], kind='cubic')  # FINDING CL FOR MAX L/D
+    # Cl_loi = f2(maxLD)
 
-    optimal_V_loi = np.sqrt(W_over_S / (0.5 * rho_sp * Cl_loi)) # FINDING VELOCITY FOR MAX L/D
+    # optimal_V_loi = np.sqrt(W_over_S / (0.5 * rho_sp * Cl_loi))  # FINDING VELOCITY FOR MAX L/D
 
-    optimal_V_loiP = 0.75 * optimal_V_loi                       # MULTIPLY WITH 0.75 TO GET VELOCTY FOR POWER CONSUM-
+    # optimal_V_loiP = 0.75 * optimal_V_loi  # MULTIPLY WITH 0.75 TO GET VELOCTY FOR POWER CONSUM-
 
-    newCl_loi = W / (S * rho_sp * 0.5 * optimal_V_loiP ** 2)        # NEW CL FOR THE NEW VELOCITY
-    newCd_loi = np.interp(newCl_loi, values[:, 4], values[:, 7])    # GET CD THROUGH THE NEW CL
+    # newCl_loi = W / (S * rho_sp * 0.5 * optimal_V_loiP ** 2)  # NEW CL FOR THE NEW VELOCITY
+    # newCd_loi = np.interp(newCl_loi, values[:, 4], values[:, 7])  # GET CD THROUGH THE NEW CL
 
-    Power_spr = (W * Cd_spr * V_sp / Cl_sp)                         # POWER SPRINT
+    # Power_spr = (W * Cd_spr * V_sp / Cl_sp)  # POWER SPRINT
 
-    Power_loi = (W * newCd_loi * optimal_V_loiP / newCl_loi)        # POWER LOITER
+    # Power_loi = (W * newCd_loi * optimal_V_loiP / newCl_loi)  # POWER LOITER
 
     # power_total = Power_loi + Power_spr                             # THIS IS OBVIOUSLY WRONG, BUT WE NEED TO RETURN
-                                                                    # SOMETHING?
+    # SOMETHING?
 
-    print("Power consumption for optimal velocity in loiter: " + str(Power_loi) + " W ")
-    return Power_loi, MyCG_sp, coeff # add pitch moment, constrains
-
+    # print("Power consumption for optimal velocity in loiter: " + str(Power_loi) + " W ")
+    return -maxLD, MyCG_sp, coeff  # add pitch moment, constrains
 
 # _______________________________________________________________________________________________________________________
 
 
 # "uav_it5_thicknessTE_0dot01_twist6-0_wingsplus30mm"
-out = OptimizeBWB(1, 2, 3)
+# out = OptimizeBWB(1, 2, 3)

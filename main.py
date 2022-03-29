@@ -1,7 +1,9 @@
 import subprocess
 import numpy as np
+import math
 import xml.etree.ElementTree as ET
 import matplotlib.pyplot as plt
+from scipy.stats import linregress
 from scipy.interpolate import interp1d
 
 path_org = r"C:\Users\abbes\PycharmProjects\KandidatProjekt\Bachelor-MMSX20"
@@ -64,8 +66,8 @@ DISA_loi = 0
 # __________________________________INITIAL CALCULATIONS________________________________________________________________
 
 W = 3 * 9.82
-rho_to = 1.2255 # For take off altitude 0m
-rho_sp = 1.1677 # For sprint altitude 500m
+rho_to = 1.2255  # For take off altitude 0m
+rho_sp = 1.1677  # For sprint altitude 500m
 
 DynamicP_to = 0.5 * rho_to * V_to ** 2
 DynamicP_spr = 0.5 * rho_sp * V_sp ** 2
@@ -92,17 +94,16 @@ print("AoA SPRINT: ", AoA_sp)
 # Get pithing moment around centre of gravity for sprint condition
 MyCG_sp = np.interp(AoA_sp, values[:, 2], values[:, 15])
 
-
 L_D_sp = np.interp(AoA_sp, values[:, 2], values[:, 9])
 print("L/D SPRINT: ", L_D_sp)
 
 # __________________________________________________________________________________________________________________
 
 # ___________________MAXIMIZING L/D AND MINIMIZING ENERGY CONSUMPTION___________________________________________________
-maxLD = np.max(values[:, 9])                            # GETTING MAX L/D
+maxLD = np.max(values[:, 9])  # GETTING MAX L/D
 print("MAX L/D: ", maxLD)
 
-f2 = interp1d(values[:, 9], values[:, 4], kind='cubic') # FINDING CL FOR MAX L/D
+f2 = interp1d(values[:, 9], values[:, 4], kind='cubic')  # FINDING CL FOR MAX L/D
 Cl_loi = f2(maxLD)
 
 print("CL LOITER: ", Cl_loi)
@@ -110,29 +111,29 @@ f3 = interp1d(values[:, 9], values[:, 7], kind='cubic')
 Cd_loi = f3(maxLD)
 print("CD LOITER: ", Cd_loi)
 
-
-optimal_V_loi = np.sqrt(W_over_S / (0.5 * rho_sp * Cl_loi)) # FINDING VELOCITY FOR MAX L/D
+optimal_V_loi = np.sqrt(W / (S*0.5 * rho_sp * Cl_loi))  # FINDING VELOCITY FOR MAX L/D
 print("VELOCITY LOITER FOR MAX L/D: ", optimal_V_loi)
 
-optimal_V_loiP = 0.75 * optimal_V_loi                       # MULTIPLY WITH 0.75 TO GET VELOCTY FOR POWER CONSUM-
+optimal_V_loiP = 0.75 * optimal_V_loi  # MULTIPLY WITH 0.75 TO GET VELOCTY FOR POWER CONSUM-
 print("VELOCITY LOITER FOR OPTIMAL POWER CONSUMPTION: ", optimal_V_loiP)
 
-newCl_loi = W / (S * rho_sp * 0.5 * optimal_V_loiP ** 2)        # NEW CL FOR THE NEW VELOCITY
+newCl_loi = W / (S * rho_sp * 0.5 * optimal_V_loiP ** 2)  # NEW CL FOR THE NEW VELOCITY
 print("NEW CL LOITER: ", newCl_loi)
-newCd_loi = np.interp(newCl_loi, values[:, 4], values[:, 7])    # GET CD THROUGH THE NEW CL
-plt.plot(values[:,4], values[:,7])
+newCd_loi = np.interp(newCl_loi, values[:, 4], values[:, 7])  # GET CD THROUGH THE NEW CL
+# plt.plot(values[:, 4], values[:, 7])
 print("NEW CD LOITER: ", newCd_loi)
 
-Power_spr = (W * Cd_spr * V_sp / Cl_sp)                         # POWER SPRINT
+Power_spr = (W * Cd_spr * V_sp / Cl_sp)  # POWER SPRINT
 print("POWER CONSUMPTION SPRINT: ", Power_spr, " W ")
 
-Power_loi = (W * newCd_loi * optimal_V_loiP / newCl_loi)        # POWER LOITER
+Power_loi = (W * newCd_loi * optimal_V_loiP / newCl_loi)  # POWER LOITER
 print("POWER CONSUMPTION LOITER: ", Power_loi, " W ")
 
-power_total = Power_loi + Power_spr                             # THIS IS OBVIOUSLY WRONG, BUT WE NEED TO RETURN
-                                                                # SOMETHING?
+power_total = Power_loi + Power_spr  # THIS IS OBVIOUSLY WRONG, BUT WE NEED TO RETURN
+# SOMETHING?
 
-
-
+coeff = math.atan(linregress(values[:, 2],values[:, 15])[0])
+plt.plot(values[:,2], values[:,15])
+print("COEFFICIENT FOR PITCHING MOMENT SLOPE: ", coeff)
 
 plt.show()
