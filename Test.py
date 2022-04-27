@@ -39,15 +39,6 @@ dic['W13'] = W13
 dic['W22'] = W22
 dic['W31'] = W31
 
-# Sentences
-R1 = 'S21 <-> (W31 or W22)'
-R2 = 'S12 <-> (W13 or W22)'
-
-R3 = '(-W13 and -W22) -> W31'
-
-R4 = 'S21'
-R5 = '-S12'
-
 TR1 = []
 TR2 = []
 TR3 = []
@@ -112,8 +103,8 @@ for i in range(len(TR1)):
     else:
         KB.append(False)
 
-dic['R1: S21 <-> (W31 or W22)'] = TR1
-dic['R2: S12 <-> (W13 or W22)'] = TR2
+dic['R1: S21<->(W31 or W22)'] = TR1
+dic['R2: S12<->(W13 or W22)'] = TR2
 dic['R3: -((W31 or W22) and (W22 or W13) and (W31 or W13))'] = TR3
 dic['R4: S21'] = TR4
 dic['R5: -S12'] = TR5
@@ -123,5 +114,5 @@ index = []
 for k in range(len(TR1)):
     index.append(k + 1)
 
-table = tabulate(dic, headers='keys', showindex=index)
+table = tabulate(dic, headers='keys', showindex=index, tablefmt='pretty')
 print(table)

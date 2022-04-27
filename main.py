@@ -1,139 +1,154 @@
-import subprocess
-import numpy as np
 import math
-import xml.etree.ElementTree as ET
-import matplotlib.pyplot as plt
+import openmdao.api as om
+import subprocess
 from scipy.stats import linregress
-from scipy.interpolate import interp1d
+import numpy as np
+import xml.etree.ElementTree as ET
 
 path_org = r"C:\Users\abbes\PycharmProjects\KandidatProjekt\Bachelor-MMSX20"
 path_vspaero = r"C:\Users\abbes\PycharmProjects\KandidatProjekt\OpenVSP-3.26.1-win64"
 path_output = "C:/Users/abbes/PycharmProjects/KandidatProjekt/Bachelor-MMSX20"
 path_degengeom = r"C:\Users\abbes\PycharmProjects\KandidatProjekt\OpenVSP-3.26.1-win64\scripts"
+ORIGINAL_GEOMETRY_NAME = "6degTwistGridTesting2"
+filename_org = r"{}\{}.vsp3".format(path_org, ORIGINAL_GEOMETRY_NAME)
 
-Newfile = "6degTwistGridTesting"
-Aidsfile = 'carlos_data'
-# ______________________________________________________________________________________________________________________
 
-# __________________________________OPENVSP___________________________________________________________________________
+def CreateGeom(sweepval, twistval):
+    tree = ET.parse(filename_org)
+    root = tree.getroot()
 
-# Collect results from simulation
-input_data = r"{}\{}_DegenGeom.polar".format(path_output, Newfile)
+    k = 0  # Counter for the different sections
+    for twist in root.iter('Theta'):
 
-# ______________________________________________________________________________________________________________________
+        if k == 4:
+            value = list(dict.items(twist.attrib))
+            value[0] = ('Value', '{}'.format(twistval[0]))
+            new_att = dict(value)
+            twist.attrib = new_att
+        elif k == 5:
+            value = list(dict.items(twist.attrib))
+            value[0] = ('Value', '{}'.format(twistval[1]))
+            new_att = dict(value)
+            twist.attrib = new_att
+        k += 1
 
-# _____________Reads the result from the VSPaero simulation and saves results into code_______________________________
+    k = 0  # Counter for the different sections
+    for sweep in root.iter('Sweep'):
 
-dummy = []
-with open(input_data, mode='r') as file:
-    line = file.readline()
-    line = line.strip()
-    line = ' '.join(line.split()).split(' ')
+        if k == 4:
+            value = list(dict.items(sweep.attrib))
+            value[0] = ('Value', '{}'.format(sweepval))
+            new_att = dict(value)
+            sweep.attrib = new_att
+        elif k == 5:
+            value = list(dict.items(sweep.attrib))
+            value[0] = ('Value', '{}'.format(sweepval))
+            new_att = dict(value)
+            sweep.attrib = new_att
+        k += 1
 
-    counter = 0
-    while line:
-        if counter != 0:
-            line = line.strip()
-            line = ' '.join(line.split()).split(' ')
-            line = list(map(float, line))
+    # Writes to a new .vsp3 file that can be analyzed in OpenVSP
+    Newfile = "output"
+    tree.write('{}.vsp3'.format(Newfile))
 
-            dummy.append(line)
 
-        counter += 1
+def VSPaeroSim(newfile: str):
+    subprocess.run(
+        r"{}\vspscript.exe {}\{}.vsp3 -script {}\DegenGeom.vspscript".format(path_vspaero, path_output, newfile,
+                                                                             path_degengeom))
+    # Running VSPaero simulation for new file with changed values
+    subprocess.run(r"{}\vspaero.exe -omp 4 {}/{}_DegenGeom".format(path_vspaero, path_output, newfile), shell=True)
+
+    # Collect results from simulation
+    input_data = r"{}\{}_DegenGeom.polar".format(path_output, newfile)
+
+    dummy = []
+    with open(input_data, mode='r') as file:
         line = file.readline()
-values = np.array(dummy)
+        line = line.strip()
+        line = ' '.join(line.split()).split(' ')
 
-# ______________________________________________________________________________________________________________________
+        counter = 0
+        while line:
+            if counter != 0:
+                line = line.strip()
+                line = ' '.join(line.split()).split(' ')
+                line = list(map(float, line))
 
-# ________________________________________________REQUIREMENTS________________________________________________________
-# Take-off
-V_to = 15  # m/s
-alt_to = 0
-DISA_to = 0  # degree
+                dummy.append(line)
 
-# Sprint
-V_sp = 35
-alt_sp = 500
-DISA_sp = 0
-# Coefficient of moment needs to be 0 at the centre of gravity - pos:[0.215,0,0]
+            counter += 1
+            line = file.readline()
 
-# Loiter
-alt_loi = 500
-DISA_loi = 0
-# We want maximum lift to drag ratio
-# _____________________________________________________________________________________________________________________
+    return np.array(dummy)
 
-# __________________________________INITIAL CALCULATIONS________________________________________________________________
 
-W = 3 * 9.82
-rho_to = 1.2255  # For take off altitude 0m
-rho_sp = 1.1677  # For sprint altitude 500m
+class BWBOptimizer(om.ExplicitComponent):  # CORRECT INHERITANCE?
 
-DynamicP_to = 0.5 * rho_to * V_to ** 2
-DynamicP_spr = 0.5 * rho_sp * V_sp ** 2
+    def setup(self):
+        self.add_input('sweep', 10)
+        self.add_input('twist_one', 10)
+        self.add_input('twist_two', 10)
 
-Cl_max = 0.632  # FOR NOW, change when we have real value
-Cl_to = 0.8 * Cl_max
+        self.add_output('maxL/D', 0.0)
+        self.add_output('pitching_moment_c', 0.0)
+        self.add_output('pitching_moment_slope', 0.0)
 
-W_over_S = Cl_to * DynamicP_to
-Wing_loading = W_over_S / 9.82
-S = W / W_over_S
+        self.declare_partials(of='*', wrt='*', method='cs')
 
-Cl_sp = W_over_S / DynamicP_spr
-print("CL SPRINT: ", Cl_sp)
-Cd_spr = np.interp(Cl_sp, values[:, 4], values[:, 7])
-print("CD SPRINT: ", Cd_spr)
-# _____________________________________________________________________________________________________________________
+    def compute(self, inputs, outputs):
+        sweep = inputs['sweep']
+        twist_one = inputs['twist_one']
+        twist_two = inputs['twist_two']
+        print(sweep.real, type(sweep.real))
+        CreateGeom(float(sweep.real), [float(twist_one.real), float(twist_two.real)])
 
-# _________________________________________________TRIMMING CONDITIONS_________________________________________________
+        values = VSPaeroSim("output")
 
-# Find optimal AoA
-AoA_sp = np.interp(Cl_sp, values[:, 4], values[:, 2])
-print("AoA SPRINT: ", AoA_sp)
+        outputs['maxL/D'] = np.max(values[:,9])
 
-# Get pithing moment around centre of gravity for sprint condition
-MyCG_sp = np.interp(AoA_sp, values[:, 2], values[:, 15])
+        outputs['pitching_moment_c'] = np.interp(np.interp(0.0974620473178567, values[:, 4], values[:, 2]),
+                                                 values[:, 2], values[:, 15])
 
-L_D_sp = np.interp(AoA_sp, values[:, 2], values[:, 9])
-print("L/D SPRINT: ", L_D_sp)
+        outputs['pitching_moment_slope'] = math.atan(linregress(values[:, 2], values[:, 15])[0])
 
-# __________________________________________________________________________________________________________________
 
-# ___________________MAXIMIZING L/D AND MINIMIZING ENERGY CONSUMPTION___________________________________________________
-maxLD = np.max(values[:, 9])  # GETTING MAX L/D
-print("MAX L/D: ", maxLD)
+# ________OPTIMIZATION___________________________________________________
 
-f2 = interp1d(values[:, 9], values[:, 4], kind='cubic')  # FINDING CL FOR MAX L/D
-Cl_loi = f2(maxLD)
+prob = om.Problem()
 
-print("CL LOITER: ", Cl_loi)
-f3 = interp1d(values[:, 9], values[:, 7], kind='cubic')
-Cd_loi = f3(maxLD)
-print("CD LOITER: ", Cd_loi)
+prob.model.add_subsystem('BWBopt', BWBOptimizer(), promotes_inputs=['sweep', 'twist_one', 'twist_two'])
 
-optimal_V_loi = np.sqrt(W / (S*0.5 * rho_sp * Cl_loi))  # FINDING VELOCITY FOR MAX L/D
-print("VELOCITY LOITER FOR MAX L/D: ", optimal_V_loi)
+prob.driver = om.ScipyOptimizeDriver()
+prob.driver.options['optimizer'] = 'SLSQP'  # NOT SURE WHAT SPECIFIC OPTIMIZER IS NEEDED HERE
 
-optimal_V_loiP = 0.75 * optimal_V_loi  # MULTIPLY WITH 0.75 TO GET VELOCTY FOR POWER CONSUM-
-print("VELOCITY LOITER FOR OPTIMAL POWER CONSUMPTION: ", optimal_V_loiP)
+# prob.driver.options['debug_print'] = ['desvars','objs']
 
-newCl_loi = W / (S * rho_sp * 0.5 * optimal_V_loiP ** 2)  # NEW CL FOR THE NEW VELOCITY
-print("NEW CL LOITER: ", newCl_loi)
-newCd_loi = np.interp(newCl_loi, values[:, 4], values[:, 7])  # GET CD THROUGH THE NEW CL
-# plt.plot(values[:, 4], values[:, 7])
-print("NEW CD LOITER: ", newCd_loi)
 
-Power_spr = (W * Cd_spr * V_sp / Cl_sp)  # POWER SPRINT
-print("POWER CONSUMPTION SPRINT: ", Power_spr, " W ")
+prob.model.add_design_var('sweep', lower=-20, upper=20)
+prob.model.add_design_var('twist_one', lower=0, upper=15)
+prob.model.add_design_var('twist_two', lower=0, upper=15)
+prob.model.add_constraint('BWBopt.pitching_moment_c', lower=-0.2, upper=0.2)
+prob.model.add_constraint('BWBopt.pitching_moment_slope', lower=-0.000005, upper=-4.5)
 
-Power_loi = (W * newCd_loi * optimal_V_loiP / newCl_loi)  # POWER LOITER
-print("POWER CONSUMPTION LOITER: ", Power_loi, " W ")
+prob.model.add_objective('BWBopt.maxL/D', scaler=-1)
 
-power_total = Power_loi + Power_spr  # THIS IS OBVIOUSLY WRONG, BUT WE NEED TO RETURN
-# SOMETHING?
+# prob.driver.options['tol'] = 1e-9
+#prob.driver.options['disp'] = True
+#recorder = om.SqliteRecorder('cases.sql')
+#prob.driver.add_recorder(recorder)
+#prob.driver.recording_options['includes'] = ['*']
+#prob.driver.recording_options['record_derivatives'] = True
 
-coeff = math.atan(linregress(values[:, 2],values[:, 15])[0])
-plt.plot(values[:,2], values[:,15])
-print("COEFFICIENT FOR PITCHING MOMENT SLOPE: ", coeff)
+prob.setup()
 
-plt.show()
+# Set input values
+prob.set_val('sweep', 10)
+prob.set_val('twist_one', 10)
+prob.set_val('twist_two', 10)
+
+prob.run_driver()
+
+#prob.cleanup()
+#cr = om.CaseReader("cases.sql")
+#driver_cases = cr.list_cases('driver')
